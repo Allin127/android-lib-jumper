@@ -1,16 +1,20 @@
 package com.vonallin.lib.jumper;
 
 
+import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 
+import com.google.gson.Gson;
 import com.vonallin.lib.base.util.StringUtil;
 import com.vonallin.lib.jump.R;
 import com.vonallin.lib.jumper.enums.JumpAnimEnum;
 import com.vonallin.lib.jumper.enums.JumpTypeEnum;
+import com.vonallin.lib.jumper.exception.ContextNullException;
 import com.vonallin.lib.jumper.exception.FragmentCreateException;
 import com.vonallin.lib.jumper.exception.OptionsSingletoneTagEmptyException;
 import com.vonallin.lib.util.ActivityUtil;
@@ -78,9 +82,39 @@ public class AllinNavigation implements FragmentManager.OnBackStackChangedListen
             mTempContext = ActivityUtil.findActivityContext(mContext);
         }
     }
+    /**
+     * 确保安全启动另外的Activity.
+     */
+
+    public static String ALLIN_JUMP_FRAGMENT_OPTIONS_KEY = "ALLIN_JUMP_FRAGMENT_OPTIONS_KEY";
+
+    public static void toActivity(Activity activity, Intent intent) {
+        AllinNavigation.toActivity(activity,intent,null);
+    }
+
+    public static void toActivity(Activity activity, Intent intent, FragmentOptions fragmentOptions) {
+        AllinNavigation.toActivity(activity,intent,fragmentOptions,-1);
+    }
+
+    public static void toActivity(Activity activity, Intent intent, FragmentOptions fragmentOptions, int requestCode) {
+        if (activity == null) {
+            throw new ContextNullException("toActivity params activity is null");
+        }
+        if (intent == null) {
+            throw new ContextNullException("toActivity params intent is null");
+        }
+        if (fragmentOptions != null) {
+            intent.putExtra(ALLIN_JUMP_FRAGMENT_OPTIONS_KEY, fragmentOptions.toString());
+        }
+        if (requestCode >= 0) {
+            activity.startActivityForResult(intent, requestCode);
+        } else {
+            activity.startActivity(intent);
+        }
+    }
 
 
-    //    所设置的值都不一样
+    //    对外启动
     public static AllinNavigation from(FragmentActivity aty) {
         return new AllinNavigation(aty);
     }
@@ -99,7 +133,7 @@ public class AllinNavigation implements FragmentManager.OnBackStackChangedListen
         return null;
     }
 
-    //Activity中的第一个
+    //Activity中的第一个fragment
     public AllinNavigation root(Class<? extends Fragment> fragClazz, String tag){
         return to(fragClazz,tag,(builder)-> AllinNavigation.switchFragmentOptions());
     }
